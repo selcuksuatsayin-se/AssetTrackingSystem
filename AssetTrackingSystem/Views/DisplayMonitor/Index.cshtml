@@ -1,0 +1,141 @@
+@model IEnumerable<AssetTrackingSystem.Models.DisplayMonitor>
+
+@{
+    ViewData["Title"] = "Monitörler";
+}
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="bi bi-display me-2"></i>Monitörler</h1>
+        <p>Tüm kayýtlý monitörlerin listesi</p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Yeni Ekle
+                </a>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" placeholder="Arama..." id="searchInput">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Kullanýcý</th>
+                            <th>Model</th>
+                            <th>Seri No</th>
+                            <th>Durum</th>
+                            <th>Ýþlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.UserName))
+                                    {
+                                        <span>@item.UserName @item.UserSurname</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Atanmamýþ</span>
+                                    }
+                                </td>
+                                <td>@item.Model</td>
+                                <td>@item.SerialNumber</td>
+                                <td>
+                                    @if (item.IsFaulty)
+                                    {
+                                        <span class="badge bg-danger">Arýzalý</span>
+                                    }
+                                    else if (item.IsInWarehouse)
+                                    {
+                                        <span class="badge bg-warning">Depoda</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Kullanýmda</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+
+                                        <!-- Depo Butonu -->
+                                        @if (item.IsInWarehouse)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success warehouse-toggle"
+                                                    data-id="@item.Id"
+                                                    data-type="DisplayMonitor"
+                                                    data-action="false"
+                                                    title="Depodan Çýkar">
+                                                <i class="bi bi-box-arrow-up"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-warning warehouse-toggle"
+                                                    data-id="@item.Id"
+                                                    data-type="DisplayMonitor"
+                                                    data-action="true"
+                                                    title="Depoya Gönder">
+                                                <i class="bi bi-box-arrow-in-down"></i>
+                                            </button>
+                                        }
+
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // AJAX ile depo durumunu deðiþtirme
+        $(document).on('click', '.warehouse-toggle', function() {
+            const deviceId = $(this).data('id');
+            const deviceType = $(this).data('type');
+            const moveToWarehouse = $(this).data('action');
+
+            $.post('/Reports/ToggleWarehouseStatus', {
+                deviceId: deviceId,
+                deviceType: deviceType,
+                moveToWarehouse: moveToWarehouse,
+                note: "Depo iþlemi: " + new Date().toLocaleString()
+            }, function(response) {
+                if (response.success) {
+                    location.reload(); // Sayfayý yenile
+                } else {
+                    alert('Ýþlem baþarýsýz!');
+                }
+            });
+        });
+
+        // Basit arama fonksiyonu
+        $('#searchInput').keyup(function() {
+            const value = $(this).val().toLowerCase();
+            $('tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    </script>
+}

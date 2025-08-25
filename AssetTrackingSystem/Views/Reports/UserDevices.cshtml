@@ -1,0 +1,578 @@
+﻿@model AssetTrackingSystem.Models.ViewModels.UserDevicesReportViewModel
+
+@{
+    ViewData["Title"] = "Kişiye Ait Cihazlar - Demirbaş Takip Sistemi";
+}
+
+<div class="container-fluid" id="pageRoot">
+    <div class="page-header">
+        <h1><i class="bi bi-person-gear me-2"></i>Kişiye Ait Cihazlar</h1>
+        <p class="text-muted">Kullanıcılara zimmetli cihazları kategoriler halinde görüntüleyin</p>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-search me-2"></i>Kullanıcı Arama</h5>
+        </div>
+        <div class="card-body">
+            <form id="searchForm" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label">Kullanıcı Adı</label>
+                    <input type="text" id="searchUserName" class="form-control" placeholder="Örn: Selçuk">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Kullanıcı Soyadı</label>
+                    <input type="text" id="searchUserSurname" class="form-control" placeholder="Örn: Sayın">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" id="searchButton" class="btn btn-primary w-100">
+                        <div class="loading-spinner" id="loadingSpinner"></div>
+                        <span id="searchButtonText"><i class="bi bi-search me-1"></i>Sorgula</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="resultsSection" style="display: none;">
+        <!-- Kullanıcı Bilgi Kartı -->
+        <div class="alert alert-info d-flex align-items-center mb-3">
+            <i class="bi bi-person-circle me-3 fs-4"></i>
+            <div>
+                <h6 class="mb-1">Görüntülenen Kullanıcı</h6>
+                <span class="fw-bold" id="displayedUserName"></span>
+                <span class="text-muted ms-2">(<span id="displayedDeviceCount"></span> cihaz zimmetli)</span>
+            </div>
+        </div>
+
+        <div class="action-buttons d-flex gap-2 mb-4">
+            <button id="exportExcel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel'e Aktar
+            </button>
+            <button id="printHandover" class="btn btn-primary">
+                <i class="bi bi-printer-fill me-1"></i>Zimmet Formu Yazdır
+            </button>
+        </div>
+
+        <div id="devicesContent">
+            <!-- Dinamik olarak doldurulacak -->
+        </div>
+    </div>
+
+    <div id="noResults" class="alert alert-warning mt-4" style="display: none;">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Aradığınız kriterlere uygun kullanıcı bulunamadı.</strong>
+    </div>
+</div>
+
+<!-- Yalnızca yazdırma için kullanılacak ZİMMET FORMU (gizli) -->
+<div id="handoverFormContainer" class="handover-print only-print">
+    <div class="handover-form">
+        <div class="form-header">
+            <div>
+                <h3>BT Donanım Teslim Formu<br /><small>IT Hardware Handover Form</small></h3>
+            </div>
+            <div class="company-info">
+                <!-- Şirket logonuzu buraya yerleştirin -->
+                <img src="/images/logo.png" alt="Logo" class="logo" />
+                <p class="doc-code">P HTR IT 001/1te</p>
+            </div>
+        </div>
+
+        <div class="title-bar">ZİMMET FORMU</div>
+
+        <table class="device-table" id="handoverDevicesTable">
+            <thead>
+                <tr>
+                    <th style="width:18%">Cihaz</th>
+                    <th style="width:42%">Model</th>
+                    <th style="width:30%">Seri No / IMEI</th>
+                    <th style="width:10%">Adet</th>
+                </tr>
+            </thead>
+            <tbody id="handoverDevices">
+                <!-- JS ile doldurulacak -->
+            </tbody>
+        </table>
+
+        <p class="note">
+            Yukarıdaki ürünü(leri) eksiksiz ve çalışır şekilde teslim aldım.<br />
+            <em>I received the product(s) as complete and in working condition.</em><br />
+            Notlar/Notes: <span id="handoverNotes">__________________________</span>
+        </p>
+
+        <div class="signatures">
+            <div class="sig-block">
+                <div class="sig-title">Teslim Alan Kullanıcı</div>
+                <div>Ad Soyad / Name Surname: <strong id="sigReceiverName"></strong></div>
+                <div class="sig-line">İmza / Signature:</div>
+                <div>Tarih / Date: <span id="sigReceiverDate"></span></div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-title">İade Alan Kullanıcı</div>
+                <div>Ad Soyad / Name Surname:</div>
+                <div class="sig-line">İmza / Signature:</div>
+                <div>Tarih / Date:</div>
+            </div>
+        </div>
+
+        <div class="footer-code">P HTR IT 001/1te - 20.10.2016</div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        /* Genel */
+        .loading-spinner {
+            display: none;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #fff;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 6px
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* Cihaz kategorileri için styling */
+        .device-category {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .category-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+        }
+
+        /* Yazdırma formu görünümü */
+        .handover-print {
+            display: none
+        }
+
+        .handover-form {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #000;
+            padding: 14mm 12mm; /* A4 kenar boşlukları */
+            position: relative;
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px
+        }
+
+            .form-header h3 {
+                margin: 0;
+                font-size: 18px
+            }
+
+            .form-header small {
+                font-size: 12px;
+                font-weight: normal
+            }
+
+        .company-info {
+            text-align: right
+        }
+
+            .company-info .logo {
+                height: 100px;
+                object-fit: contain;
+                display: block;
+                margin-left: auto
+            }
+
+            .company-info .doc-code {
+                margin: 4px 0 0 0;
+                font-size: 12px
+            }
+
+        .title-bar {
+            background: #1f78d1;
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+            padding: 4px 6px;
+            margin: 8px 0
+        }
+
+        .device-table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+            .device-table th, .device-table td {
+                border: 1px solid #000;
+                padding: 6px;
+                vertical-align: top
+            }
+
+        .note {
+            margin: 12px 0
+        }
+
+        .signatures {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px
+        }
+
+        .sig-block {
+            flex: 1;
+            border: 1px solid #000;
+            padding: 10px
+        }
+
+        .sig-title {
+            font-weight: bold;
+            margin-bottom: 8px
+        }
+
+        .sig-line {
+            margin: 10px 0
+        }
+
+        .footer-code {
+            position: absolute;
+            bottom: 8mm;
+            left: 8mm;
+            font-size: 12px
+        }
+
+        /* Sadece yazdırırken – sayfanın geri kalanını gizle, formu göster */
+        @@media print {
+            #pageRoot, .btn, .action-buttons, #noResults {
+                display: none !important;
+            }
+
+            .only-print {
+                display: block !important;
+            }
+
+            @@page {
+                size: A4;
+                margin: 8mm;
+            }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        // ---------- ARAMA ----------
+        document.getElementById('searchButton').addEventListener('click', function () {
+            const userName = document.getElementById('searchUserName').value.trim();
+            const userSurname = document.getElementById('searchUserSurname').value.trim();
+
+            if (!userName && !userSurname) {
+                alert('Lütfen en az bir arama kriteri giriniz (ad veya soyad)');
+                return;
+            }
+
+            // Yükleme
+            document.getElementById('loadingSpinner').style.display = 'inline-block';
+            document.getElementById('searchButtonText').textContent = ' Aranıyor...';
+            document.getElementById('searchButton').disabled = true;
+
+            fetch('/Reports/UserDevicesSearch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userName, userSurname })
+            })
+                .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
+                .then(data => {
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    document.getElementById('searchButtonText').innerHTML = '<i class="bi bi-search me-1"></i>Sorgula';
+                    document.getElementById('searchButton').disabled = false;
+
+                    if (data.success) {
+                        displayResults(data);
+                        // Zimmet formunu da doldur
+                        generateHandoverForm(data);
+                    } else {
+                        document.getElementById('resultsSection').style.display = 'none';
+                        document.getElementById('noResults').style.display = 'block';
+                        document.getElementById('noResults').innerHTML = `
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>${data.message || 'Arama sırasında bir hata oluştu.'}</strong>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    document.getElementById('searchButtonText').innerHTML = '<i class="bi bi-search me-1"></i>Sorgula';
+                    document.getElementById('searchButton').disabled = false;
+                    alert('Arama sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+                });
+        });
+
+        // ---------- SONUÇ GÖRÜNTÜLEME (mevcut tablolar) ----------
+        function displayResults(data) {
+            // Yeni eklenen kullanıcı bilgi alanlarını doldur
+            document.getElementById('displayedUserName').textContent = data.fullUserName;
+            
+            let devicesContent = '';
+            let deviceCount = 0;
+
+            const badge = (n, color) => `<span class="badge bg-${color} me-2">${n}</span>`;
+            const stateBadge = (obj) =>
+                obj.isFaulty ? '<span class="badge bg-danger">Arızalı</span>' :
+                obj.isInWarehouse ? '<span class="badge bg-warning">Depoda</span>' :
+                '<span class="badge bg-success">Aktif</span>';
+
+            // Bilgisayarlar
+            if (data.userComputers?.length) {
+                deviceCount += data.userComputers.length;
+                devicesContent += `
+                <div class="device-category">
+                  <div class="category-header">
+                    <div class="d-flex align-items-center">
+                      ${badge(data.userComputers.length,'primary')}
+                      <i class="bi bi-laptop me-2"></i><h6 class="mb-0">Bilgisayarlar</h6>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                      <thead class="table-light">
+                        <tr><th>Model</th><th>Seri No</th><th>Host Adı</th><th>İşletim Sistemi</th><th>Durum</th><th>İşlem</th></tr>
+                      </thead>
+                      <tbody>
+                        ${data.userComputers.map(c=>`
+                          <tr>
+                            <td><strong>${c.model||'Belirtilmemiş'}</strong></td>
+                            <td><code>${c.serialNumber||'Belirtilmemiş'}</code></td>
+                            <td>${c.hostName||'Belirtilmemiş'}</td>
+                            <td>${c.operatingSystem||'Belirtilmemiş'}</td>
+                            <td>${stateBadge(c)}</td>
+                            <td>
+                              <div class="btn-group btn-group-sm">
+                                <a href="/Computer/Details/${c.id}" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                <a href="/Computer/Edit/${c.id}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                              </div>
+                            </td>
+                          </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            // Monitörler
+            if (data.userDisplayMonitors?.length) {
+                deviceCount += data.userDisplayMonitors.length;
+                devicesContent += `
+                <div class="device-category">
+                  <div class="category-header">
+                    <div class="d-flex align-items-center">
+                      ${badge(data.userDisplayMonitors.length,'info')}
+                      <i class="bi bi-display me-2"></i><h6 class="mb-0">Monitörler</h6>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                      <thead class="table-light">
+                        <tr><th>Model</th><th>Seri No</th><th>Satın Alma Tarihi</th><th>Durum</th><th>İşlem</th></tr>
+                      </thead>
+                      <tbody>
+                        ${data.userDisplayMonitors.map(m=>`
+                          <tr>
+                            <td><strong>${m.model||'Belirtilmemiş'}</strong></td>
+                            <td><code>${m.serialNumber||'Belirtilmemiş'}</code></td>
+                            <td>${m.purchaseDate? new Date(m.purchaseDate).toLocaleDateString('tr-TR'):'Belirtilmemiş'}</td>
+                            <td>${stateBadge(m)}</td>
+                            <td>
+                              <div class="btn-group btn-group-sm">
+                                <a href="/DisplayMonitor/Details/${m.id}" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                <a href="/DisplayMonitor/Edit/${m.id}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                              </div>
+                            </td>
+                          </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            // Cep Telefonları
+            if (data.userMobilePhones?.length) {
+                deviceCount += data.userMobilePhones.length;
+                devicesContent += `
+                <div class="device-category">
+                  <div class="category-header">
+                    <div class="d-flex align-items-center">
+                      ${badge(data.userMobilePhones.length,'success')}
+                      <i class="bi bi-phone me-2"></i><h6 class="mb-0">Cep Telefonları</h6>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                      <thead class="table-light">
+                        <tr><th>Model</th><th>IMEI</th><th>Hafıza</th><th>Satın Alma Tarihi</th><th>Durum</th><th>İşlem</th></tr>
+                      </thead>
+                      <tbody>
+                        ${data.userMobilePhones.map(p=>`
+                          <tr>
+                            <td><strong>${p.model||'Belirtilmemiş'}</strong></td>
+                            <td><code>${p.imei||'Belirtilmemiş'}</code></td>
+                            <td>${p.memory||'Belirtilmemiş'}</td>
+                            <td>${p.purchaseDate? new Date(p.purchaseDate).toLocaleDateString('tr-TR'):'Belirtilmemiş'}</td>
+                            <td>${stateBadge(p)}</td>
+                            <td>
+                              <div class="btn-group btn-group-sm">
+                                <a href="/MobilePhone/Details/${p.id}" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                <a href="/MobilePhone/Edit/${p.id}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                              </div>
+                            </td>
+                          </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            // Kulaklıklar
+            if (data.userJabraHeadsets?.length) {
+                deviceCount += data.userJabraHeadsets.length;
+                devicesContent += `
+                <div class="device-category">
+                  <div class="category-header">
+                    <div class="d-flex align-items-center">
+                      ${badge(data.userJabraHeadsets.length,'warning')}
+                      <i class="bi bi-headphones me-2"></i><h6 class="mb-0">Kulaklıklar</h6>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                      <thead class="table-light">
+                        <tr><th>Model</th><th>Seri No</th><th>Satın Alma Tarihi</th><th>Durum</th><th>İşlem</th></tr>
+                      </thead>
+                      <tbody>
+                        ${data.userJabraHeadsets.map(h=>`
+                          <tr>
+                            <td><strong>${h.model||'Belirtilmemiş'}</strong></td>
+                            <td><code>${h.serialNumber||'Belirtilmemiş'}</code></td>
+                            <td>${h.purchaseDate? new Date(h.purchaseDate).toLocaleDateString('tr-TR'):'Belirtilmemiş'}</td>
+                            <td>${stateBadge(h)}</td>
+                            <td>
+                              <div class="btn-group btn-group-sm">
+                                <a href="/JabraHeadset/Details/${h.id}" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                <a href="/JabraHeadset/Edit/${h.id}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                              </div>
+                            </td>
+                          </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            document.getElementById('devicesContent').innerHTML = devicesContent;
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('noResults').style.display = 'none';
+            
+            // Yeni eklenen alanda da cihaz sayısını göster
+            document.getElementById('displayedDeviceCount').textContent = deviceCount;
+        }
+
+        // Enter ile arama
+        document.getElementById('searchUserName').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('searchButton').click(); });
+        document.getElementById('searchUserSurname').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('searchButton').click(); });
+
+        // ---------- EXCEL DIŞA AKTAR ----------
+        document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+        function exportToExcel() {
+            const allDevices = [];
+
+            // Bilgisayarlar
+            document.querySelectorAll('#devicesContent .device-category:nth-child(1) tbody tr').forEach(row => {
+                const c = row.querySelectorAll('td');
+                if (c.length) allDevices.push({ 'Kategori': 'Bilgisayar','Model': c[0].innerText,'Seri No': c[1].innerText,'Host Adı': c[2].innerText,'İşletim Sistemi': c[3].innerText,'Durum': c[4].innerText });
+            });
+
+            // Monitörler
+            document.querySelectorAll('#devicesContent .device-category:nth-child(2) tbody tr').forEach(row => {
+                const c = row.querySelectorAll('td');
+                if (c.length) allDevices.push({ 'Kategori': 'Monitör','Model': c[0].innerText,'Seri No': c[1].innerText,'Satın Alma Tarihi': c[2].innerText,'Durum': c[3].innerText });
+            });
+
+            // Cep Telefonları
+            document.querySelectorAll('#devicesContent .device-category:nth-child(3) tbody tr').forEach(row => {
+                const c = row.querySelectorAll('td');
+                if (c.length) allDevices.push({ 'Kategori': 'Cep Telefonu','Model': c[0].innerText,'IMEI': c[1].innerText,'Hafıza': c[2].innerText,'Satın Alma Tarihi': c[3].innerText,'Durum': c[4].innerText });
+            });
+
+            // Kulaklıklar
+            document.querySelectorAll('#devicesContent .device-category:nth-child(4) tbody tr').forEach(row => {
+                const c = row.querySelectorAll('td');
+                if (c.length) allDevices.push({ 'Kategori': 'Kulaklık','Model': c[0].innerText,'Seri No': c[1].innerText,'Satın Alma Tarihi': c[2].innerText,'Durum': c[3].innerText });
+            });
+
+            if (!allDevices.length) { alert('Dışa aktarılacak veri bulunamadı.'); return; }
+
+            const ws = XLSX.utils.json_to_sheet(allDevices);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Kullanıcı Cihazları');
+
+            const userName = (document.getElementById('displayedUserName').textContent || 'Kullanici').replace(/\s+/g,'_');
+            const fileName = `${userName}_Cihaz_Listesi_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // ---------- ZİMMET FORMU: DOLDUR + YAZDIR ----------
+        function generateHandoverForm(data) {
+            // İmza alanı bilgileri
+            document.getElementById('sigReceiverName').textContent = data.fullUserName || '';
+            document.getElementById('sigReceiverDate').textContent = new Date().toLocaleDateString('tr-TR');
+
+            const tbody = document.getElementById('handoverDevices');
+            tbody.innerHTML = '';
+
+            const pushRow = (kategori, model, seriOrImei, adet = 1) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${kategori}</td>
+                    <td>${model || 'Belirtilmemiş'}</td>
+                    <td>${seriOrImei || '-'}</td>
+                    <td style="text-align:center">${adet}</td>`;
+                tbody.appendChild(tr);
+            };
+
+            // Bilgisayar
+            (data.userComputers || []).forEach(pc => pushRow('Bilgisayar', pc.model, pc.serialNumber, 1));
+            // Monitör
+            (data.userDisplayMonitors || []).forEach(m => pushRow('Monitör', m.model, m.serialNumber, 1));
+            // Telefon
+            (data.userMobilePhones || []).forEach(p => pushRow('Telefon', p.model, p.imei, 1));
+            // Kulaklık
+            (data.userJabraHeadsets || []).forEach(h => pushRow('Kulaklık', h.model, h.serialNumber, 1));
+
+            // En az bir satır yoksa placeholder satırı
+            if (!tbody.children.length) {
+                pushRow('—','—','—',0);
+            }
+        }
+
+        document.getElementById('printHandover').addEventListener('click', () => {
+            // Sadece formu yazdır: geçici olarak formu görünür yapıp print çağırıyoruz (CSS @@media print geri kalanı gizliyor)
+            window.print();
+        });
+    </script>
+}

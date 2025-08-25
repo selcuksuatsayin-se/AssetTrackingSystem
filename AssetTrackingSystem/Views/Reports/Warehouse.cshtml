@@ -1,0 +1,384 @@
+﻿@model AssetTrackingSystem.Models.ViewModels.WarehouseViewModel
+
+@{
+    ViewData["Title"] = "Depo Yönetimi - Demirbaş Takip Sistemi";
+}
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="bi bi-box-seam me-2"></i>Depo Yönetimi</h1>
+        <p class="mb-0">@Model.LastUpdateText - Toplam @Model.Stats.TotalDevices cihaz</p>
+    </div>
+
+    <!-- İstatistik Özeti -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-light d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-primary me-2">Bilgisayar: @Model.Stats.ComputerCount</span>
+                    <span class="badge bg-info me-2">Monitör: @Model.Stats.DisplayMonitorCount</span>
+                    <span class="badge bg-success me-2">Telefon: @Model.Stats.MobilePhoneCount</span>
+                    <span class="badge bg-warning me-2">Kulaklık: @Model.Stats.JabraHeadsetCount</span>
+                    <span class="badge bg-secondary me-2">Yazıcı: @Model.Stats.PrinterCount</span>
+                </div>
+                <div>
+                    <span class="badge bg-danger">Arızalı: @Model.Stats.FaultyDevicesInWarehouse</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.HasDevicesInWarehouse)
+    {
+        <!-- Bilgisayarlar -->
+        @if (Model.WarehouseComputers.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pc-display me-2"></i>Bilgisayarlar
+                        <span class="badge bg-light text-primary ms-2">@Model.WarehouseComputers.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Seri No</th>
+                                    <th>Kullanıcı</th>
+                                    <th width="100">Durum</th>
+                                    <th width="150">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.WarehouseComputers)
+                                {
+                                    <tr>
+                                        <td>@item.Model</td>
+                                        <td>@item.SerialNumber</td>
+                                        <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamış")</td>
+                                        <td>
+                                            @if (item.IsFaulty)
+                                            {
+                                                <span class="badge bg-danger">Arızalı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Çalışıyor</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary warehouse-action"
+                                                    data-id="@item.Id"
+                                                    data-type="Computer">
+                                                <i class="bi bi-box-arrow-up"></i> Çıkar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Monitörler -->
+        @if (Model.WarehouseDisplayMonitors.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-display me-2"></i>Monitörler
+                        <span class="badge bg-light text-info ms-2">@Model.WarehouseDisplayMonitors.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Seri No</th>
+                                    <th>Kullanıcı</th>
+                                    <th width="100">Durum</th>
+                                    <th width="150">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.WarehouseDisplayMonitors)
+                                {
+                                    <tr>
+                                        <td>@item.Model</td>
+                                        <td>@item.SerialNumber</td>
+                                        <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamış")</td>
+                                        <td>
+                                            @if (item.IsFaulty)
+                                            {
+                                                <span class="badge bg-danger">Arızalı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Çalışıyor</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary warehouse-action"
+                                                    data-id="@item.Id"
+                                                    data-type="DisplayMonitor">
+                                                <i class="bi bi-box-arrow-up"></i> Çıkar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Telefonlar -->
+        @if (Model.WarehouseMobilePhones.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-phone me-2"></i>Cep Telefonları
+                        <span class="badge bg-light text-success ms-2">@Model.WarehouseMobilePhones.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>IMEI</th>
+                                    <th>Kullanıcı</th>
+                                    <th width="100">Durum</th>
+                                    <th width="150">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.WarehouseMobilePhones)
+                                {
+                                    <tr>
+                                        <td>@item.Model</td>
+                                        <td>@item.IMEI</td>
+                                        <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamış")</td>
+                                        <td>
+                                            @if (item.IsFaulty)
+                                            {
+                                                <span class="badge bg-danger">Arızalı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Çalışıyor</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary warehouse-action"
+                                                    data-id="@item.Id"
+                                                    data-type="MobilePhone">
+                                                <i class="bi bi-box-arrow-up"></i> Çıkar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Kulaklıklar -->
+        @if (Model.WarehouseJabraHeadsets.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-headphones me-2"></i>Kulaklıklar
+                        <span class="badge bg-light text-warning ms-2">@Model.WarehouseJabraHeadsets.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Seri No</th>
+                                    <th>Kullanıcı</th>
+                                    <th width="100">Durum</th>
+                                    <th width="150">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.WarehouseJabraHeadsets)
+                                {
+                                    <tr>
+                                        <td>@item.Model</td>
+                                        <td>@item.SerialNumber</td>
+                                        <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamış")</td>
+                                        <td>
+                                            @if (item.IsFaulty)
+                                            {
+                                                <span class="badge bg-danger">Arızalı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Çalışıyor</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary warehouse-action"
+                                                    data-id="@item.Id"
+                                                    data-type="JabraHeadset">
+                                                <i class="bi bi-box-arrow-up"></i> Çıkar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Yazıcılar -->
+        @if (Model.WarehousePrinters.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-printer me-2"></i>Yazıcılar
+                        <span class="badge bg-light text-secondary ms-2">@Model.WarehousePrinters.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Seri No</th>
+                                    <th>Konum</th>
+                                    <th width="100">Durum</th>
+                                    <th width="150">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.WarehousePrinters)
+                                {
+                                    <tr>
+                                        <td>@item.Model</td>
+                                        <td>@item.SerialNumber</td>
+                                        <td>@(!string.IsNullOrEmpty(item.Location) ? item.Location : "Belirtilmemiş")</td>
+                                        <td>
+                                            @if (item.IsFaulty)
+                                            {
+                                                <span class="badge bg-danger">Arızalı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Çalışıyor</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary warehouse-action"
+                                                    data-id="@item.Id"
+                                                    data-type="Printer">
+                                                <i class="bi bi-box-arrow-up"></i> Çıkar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-box-seam display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">Depoda cihaz bulunmamaktadır</h4>
+                <p class="text-muted">Cihazları depoya göndermek için ilgili cihaz sayfalarını ziyaret edin.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .card-header h5 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .warehouse-action {
+        transition: all 0.2s ease;
+    }
+
+        .warehouse-action:hover {
+            transform: translateY(-1px);
+        }
+
+    .badge.bg-light {
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Depo işlemleri
+        $('.warehouse-action').click(function() {
+            const deviceId = $(this).data('id');
+            const deviceType = $(this).data('type');
+            const btn = $(this);
+
+            if (confirm('Bu cihazı depodan çıkarmak istediğinize emin misiniz?')) {
+                // Butonu disable yap
+                btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i> İşleniyor...');
+
+                $.post('/Reports/ToggleWarehouseStatus', {
+                    deviceId: deviceId,
+                    deviceType: deviceType,
+                    moveToWarehouse: false,
+                    note: "Depodan çıkarma işlemi"
+                }, function(response) {
+                    if (response.success) {
+                        // Başarılı mesajı göster
+                        const alertDiv = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                            '<i class="bi bi-check-circle me-2"></i>Cihaz başarıyla depodan çıkarıldı!' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                            '</div>');
+
+                        $('.page-header').after(alertDiv);
+
+                        // Sayfayı yenile
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('İşlem sırasında hata oluştu: ' + (response.message || 'Bilinmeyen hata'));
+                        btn.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
+                    }
+                })
+                .fail(function(xhr) {
+                    alert('Sunucu hatası! Lütfen tekrar deneyin. (Hata: ' + xhr.status + ')');
+                    btn.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
+                });
+            }
+        });
+    });
+</script>

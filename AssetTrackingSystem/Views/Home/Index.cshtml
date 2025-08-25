@@ -1,0 +1,213 @@
+﻿@model AssetTrackingSystem.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Dashboard Stats -->
+<div class="row g-3">
+    <!-- Computer Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-pc-display"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Bilgisayarlar</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalComputers</div>
+            <div class="card-change">@(Model.RecentComputers.Count) yeni eklenen</div>
+        </div>
+    </div>
+
+    <!-- Monitor Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-display"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Monitörler</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalDisplayMonitors</div>
+            <div class="card-change">@(Model.RecentDisplayMonitors.Count) yeni eklenen</div>
+        </div>
+    </div>
+
+    <!-- Mobile Phone Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-phone"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Cep Telefonları</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalMobilePhones</div>
+            <div class="card-change">@(Model.RecentMobilePhones.Count) yeni eklenen</div>
+        </div>
+    </div>
+
+    <!-- Headset Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-headphones"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Kulaklıklar</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalJabraHeadsets</div>
+            <div class="card-change">@(Model.RecentJabraHeadsets.Count) yeni eklenen</div>
+        </div>
+    </div>
+
+    <!-- Printer Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-printer"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Yazıcılar</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalPrinters</div>
+            <div class="card-change">@(Model.RecentPrinters.Count) yeni eklenen</div>
+        </div>
+    </div>
+
+    <!-- Warehouse Card -->
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <h6 class="card-title">Depodaki Cihazlar</h6>
+                </div>
+            </div>
+            <div class="card-value">@Model.TotalWarehouseDevices</div>
+            <div class="card-change">@Model.MovedToWarehouseThisMonth bu ay eklenen</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Devices -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Son Eklenen Cihazlar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cihaz Türü</th>
+                                <th>Model</th>
+                                <th>Kullanıcı/Konum</th>
+                                <th>Seri No</th>
+                                <th>Eklenme Tarihi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var device in Model.RecentComputers.Concat(Model.RecentDisplayMonitors)
+                                                        .Concat(Model.RecentMobilePhones).Concat(Model.RecentJabraHeadsets)
+                                                        .Concat(Model.RecentPrinters).OrderByDescending(d => d.CreatedDate).Take(10))
+                            {
+                                <tr>
+                                    <td>
+                                        @if (device.DeviceType == "Computer")
+                                        {
+                                            <span class="badge bg-primary">Bilgisayar</span>
+                                        }
+                                        else if (device.DeviceType == "DisplayMonitor")
+                                        {
+                                            <span class="badge bg-info">Monitör</span>
+                                        }
+                                        else if (device.DeviceType == "MobilePhone")
+                                        {
+                                            <span class="badge bg-success">Telefon</span>
+                                        }
+                                        else if (device.DeviceType == "JabraHeadset")
+                                        {
+                                            <span class="badge bg-warning">Kulaklık</span>
+                                        }
+                                        else if (device.DeviceType == "Printer")
+                                        {
+                                            <span class="badge bg-secondary">Yazıcı</span>
+                                        }
+                                    </td>
+                                    <td>@device.Model</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(device.Location))
+                                        {
+                                            @device.DisplayLocation
+                                        }
+                                        else
+                                        {
+                                            @device.FullUserName
+                                        }
+                                    </td>
+                                    <td>@device.SerialNumber</td>
+                                    <td>@device.CreatedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Arıza Durumu</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">@Model.FaultyDevicesCount</h3>
+                        <p class="text-muted mb-0">Arızalı Cihaz</p>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-hourglass-top me-2"></i>Eski Cihazlar</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">@Model.OldDevicesCount</h3>
+                        <p class="text-muted mb-0">5+ Yıllık Cihaz</p>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-hourglass-top fs-2 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

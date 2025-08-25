@@ -1,0 +1,648 @@
+﻿<!DOCTYPE html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Demirbaş Takip Sistemi</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #1e40af;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --dark-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --navbar-bg: #ffffff;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navbar Styles */
+        .navbar-custom {
+            background: var(--navbar-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+            .nav-link:hover,
+            .nav-link.active {
+                color: var(--primary-color) !important;
+                background: rgba(30, 64, 175, 0.1);
+            }
+
+        .dropdown-menu {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .dropdown-item {
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin: 0.125rem 0.5rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+            .dropdown-item:hover,
+            .dropdown-item.active {
+                background: rgba(30, 64, 175, 0.1);
+                color: var(--primary-color);
+            }
+
+            .dropdown-item i {
+                width: 16px;
+                margin-right: 0.5rem;
+            }
+
+        /* User Info Styles */
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+
+
+
+        /* UserDevices için özel stiller */
+        .device-category {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            .device-category:last-child {
+                border-bottom: none;
+            }
+
+        .category-header {
+            padding: 1rem 1.25rem;
+            background-color: #f8f9fa;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @@keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        @@media print {
+            .action-buttons, .search-form, .footer
+
+        {
+            display: none !important;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .user-icon {
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            color: var(--danger-color) !important;
+        }
+
+            .logout-btn:hover {
+                background: rgba(220, 38, 38, 0.1) !important;
+                color: var(--danger-color) !important;
+            }
+
+        /* Main Content */
+        .container-fluid {
+            padding: 2rem;
+            max-width: 1400px;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+            .page-header h1 {
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                margin-bottom: 0.5rem;
+            }
+
+            .page-header p {
+                color: var(--text-secondary);
+                margin-bottom: 0;
+            }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+
+            .dashboard-card:hover {
+                box-shadow: var(--shadow-lg);
+                transform: translateY(-3px);
+            }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            background: none !important;
+            border-bottom: none !important;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(30, 64, 175, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+
+            .card-icon i {
+                font-size: 1.2rem;
+                color: var(--primary-color);
+            }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-change {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .btn-primary:hover {
+                background: var(--primary-hover);
+                border-color: var(--primary-hover);
+            }
+
+        .btn-outline-primary {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .btn-outline-primary:hover {
+                background: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+        /* Footer */
+        .footer {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Badge */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+            .quick-actions h5 {
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 1rem;
+            }
+
+        /* Tables */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+            .table th {
+                background-color: var(--primary-color);
+                color: white;
+                font-weight: 600;
+            }
+
+            .table td {
+                vertical-align: middle;
+            }
+
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--secondary-color);
+            }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .container-fluid {
+                padding: 1rem;
+            }
+
+            .dashboard-card {
+                padding: 1rem;
+            }
+
+            .card-value {
+                font-size: 1.5rem;
+            }
+
+            .page-header {
+                padding: 1.5rem;
+            }
+
+                .page-header h1 {
+                    font-size: 1.5rem;
+                }
+
+            .user-info {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-custom">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-building me-2"></i>Demirbaş Takip Sistemi
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house me-1"></i>Ana Sayfa
+                            </a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-laptop me-1"></i>Ekipmanlar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Computer" asp-action="Index">
+                                        <i class="bi bi-pc-display"></i>Bilgisayarlar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="DisplayMonitor" asp-action="Index">
+                                        <i class="bi bi-display"></i>Monitörler
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="MobilePhone" asp-action="Index">
+                                        <i class="bi bi-phone"></i>Cep Telefonları
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="JabraHeadset" asp-action="Index">
+                                        <i class="bi bi-headphones"></i>Kulaklıklar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Printer" asp-action="Index">
+                                        <i class="bi bi-printer"></i>Yazıcılar
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-graph-up me-1"></i>Raporlar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="Warehouse">
+                                        <i class="bi bi-box-seam"></i>Depodaki Cihazlar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="UserDevices">
+                                        <i class="bi bi-person-gear"></i>Kişiye Ait Cihazlar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="WarrantyStatus">
+                                        <i class="bi bi-shield-check"></i>Garanti Durumu
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="OldDevices">
+                                        <i class="bi bi-hourglass-split"></i>Eski Cihazlar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="FaultyDevices">
+                                        <i class="bi bi-exclamation-triangle"></i>Arızalı Cihazlar
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="DeviceSearch">
+                                        <i class="bi bi-search"></i>Cihaz Arama
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="UnusedDevices">
+                                        <i class="bi bi-clock-history"></i>Kullanılmayan Cihazlar
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <!-- Sağ tarafta kullanıcı bilgileri ve çıkış butonu -->
+                    <!-- _Layout.cshtml - Çıkış ve Giriş linklerini güncelleyin -->
+                    <ul class="navbar-nav ms-auto">
+                        @if (Context.Session.GetString("IsAuthenticated") == "true")
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link user-info">
+                                    <i class="bi bi-person-circle user-icon"></i>
+                                    @Context.Session.GetString("Username")
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link logout-btn" href="/Auth/Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Çıkış
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Auth/Login">
+                                    <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container-fluid">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; @DateTime.Now.Year Demirbaş Takip Sistemi</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-decoration-none me-3">Destek</a>
+                    <a href="#" class="text-decoration-none">Gizlilik</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Active nav-link highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+
+            // Ana menü öğelerini kontrol et
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+
+                    // Dropdown menü öğesi ise, üst menüyü de aktif yap
+                    const dropdownParent = link.closest('.dropdown-menu');
+                    if (dropdownParent) {
+                        const parentDropdownToggle = document.querySelector('.nav-item.dropdown .nav-link[data-bs-toggle="dropdown"]');
+                        if (parentDropdownToggle) {
+                            parentDropdownToggle.classList.add('active');
+                        }
+                    }
+                }
+            });
+
+            // Dropdown menüler için özel kontrol
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            let activeDropdownFound = false;
+
+            dropdownItems.forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+
+                    // Üst dropdown'ı aktif yap
+                    const dropdownParent = item.closest('.dropdown-menu').previousElementSibling;
+                    if (dropdownParent && dropdownParent.classList.contains('nav-link')) {
+                        dropdownParent.classList.add('active');
+                        activeDropdownFound = true;
+                    }
+                }
+            });
+
+            // Eğer hiçbir dropdown öğesi aktif değilse, ana sayfa kontrolü yap
+            if (!activeDropdownFound) {
+                // Ekipmanlar dropdown kontrolü
+                const equipmentLinks = [
+                    '/Computer', '/DisplayMonitor', '/MobilePhone',
+                    '/JabraHeadset', '/Printer'
+                ];
+
+                if (equipmentLinks.some(link => currentPath.startsWith(link))) {
+                    document.querySelector('.nav-item.dropdown .nav-link[data-bs-toggle="dropdown"]')
+                        ?.classList.add('active');
+                }
+
+                // Raporlar dropdown kontrolü
+                const reportLinks = [
+                    '/Reports/Warehouse', '/Reports/UserDevices', '/Reports/WarrantyStatus',
+                    '/Reports/OldDevices', '/Reports/FaultyDevices', '/Reports/DeviceSearch',
+                    '/Reports/UnusedDevices'
+                ];
+
+                if (reportLinks.some(link => currentPath.startsWith(link))) {
+                    document.querySelectorAll('.nav-item.dropdown .nav-link[data-bs-toggle="dropdown"]')[1]
+                        ?.classList.add('active');
+                }
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

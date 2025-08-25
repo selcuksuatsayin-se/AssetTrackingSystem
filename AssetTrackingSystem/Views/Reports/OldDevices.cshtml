@@ -1,0 +1,674 @@
+@model AssetTrackingSystem.Models.ViewModels.OldDevicesReportViewModel
+@{
+    ViewData["Title"] = "Eski Cihazlar - Demirbaþ Takip Sistemi";
+
+    // Aktif filtre bilgisi - Daha güvenli yaklaþým
+    var activeFilter = Context.Request.Query["deviceType"].FirstOrDefault() ?? "";
+    var activeFilterName = activeFilter switch
+    {
+        "Computer" => "Bilgisayarlar",
+        "DisplayMonitor" => "Monitörler",
+        "MobilePhone" => "Cep Telefonlarý",
+        "JabraHeadset" => "Kulaklýklar",
+        "Printer" => "Yazýcýlar",
+        _ => ""
+    };
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-hourglass-split me-2"></i>@Model.ReportTitle</h1>
+    <p>@Model.ReportDescription</p>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Eski Cihazlar</h5>
+        <form method="get" class="d-flex gap-2">
+            <div class="input-group" style="width: 180px;">
+                <input type="number" class="form-control" name="thresholdYears"
+                       value="@Model.ThresholdYears" min="1" max="50" />
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-filter"></i> Yýl Filtrele
+                </button>
+            </div>
+
+            <!-- Cihaz Tipi Filtresi -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                        id="deviceTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-devices"></i> Cihaz Tipi
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="deviceTypeDropdown">
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears })">Tüm Cihazlar</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears, deviceType = "Computer" })">Bilgisayarlar</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears, deviceType = "DisplayMonitor" })">Monitörler</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears, deviceType = "MobilePhone" })">Cep Telefonlarý</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears, deviceType = "JabraHeadset" })">Kulaklýklar</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears, deviceType = "Printer" })">Yazýcýlar</a></li>
+                </ul>
+            </div>
+
+            <!-- Aktif Filtre Göstergesi -->
+            @if (!string.IsNullOrEmpty(activeFilter))
+            {
+                <span class="badge bg-info align-self-center">
+                    @activeFilterName
+                    <a href="@Url.Action("OldDevices", new { thresholdYears = Model.ThresholdYears })" class="text-white ms-1">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </span>
+            }
+        </form>
+    </div>
+    <div class="card-body">
+        @if (Model.TotalOldDevices > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tür</th>
+                            <th>Model</th>
+                            <th>Seri No</th>
+                            <th>Kullanýcý/Konum</th>
+                            <th>Alým Tarihi</th>
+                            <th>Yaþ</th>
+                            <th>Durum</th>
+                            <th>Ýþlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bilgisayarlar -->
+                        @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "Computer")
+                        {
+                            @foreach (var item in Model.OldComputers)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-primary">Bilgisayar</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.UserName) && !string.IsNullOrEmpty(item.UserSurname))
+                                        {
+                                            <span>@item.UserName @item.UserSurname</span>
+                                            @if (!string.IsNullOrEmpty(item.Company))
+                                            {
+                                                <br>
+                                                <small class="text-muted">@item.Company</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Atanmamýþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            <span>@item.PurchaseDate.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            var years = (DateTime.Now - item.PurchaseDate.Value).Days / 365;
+                                            <span class="badge bg-warning">@years yýl</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsFaulty)
+                                        {
+                                            <span class="badge bg-danger">Arýzalý</span>
+                                        }
+                                        else if (item.IsInWarehouse)
+                                        {
+                                            <span class="badge bg-warning">Depoda</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/Computer/Details/@item.Id" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/Computer/Edit/@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+
+                        <!-- Monitörler -->
+                        @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "DisplayMonitor")
+                        {
+                            @foreach (var item in Model.OldDisplayMonitors)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-info">Monitör</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.UserName) && !string.IsNullOrEmpty(item.UserSurname))
+                                        {
+                                            <span>@item.UserName @item.UserSurname</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Atanmamýþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            <span>@item.PurchaseDate.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            var years = (DateTime.Now - item.PurchaseDate.Value).Days / 365;
+                                            <span class="badge bg-warning">@years yýl</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsFaulty)
+                                        {
+                                            <span class="badge bg-danger">Arýzalý</span>
+                                        }
+                                        else if (item.IsInWarehouse)
+                                        {
+                                            <span class="badge bg-warning">Depoda</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/DisplayMonitor/Details/@item.Id" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/DisplayMonitor/Edit/@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+
+                        <!-- Cep Telefonlarý -->
+                        @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "MobilePhone")
+                        {
+                            @foreach (var item in Model.OldMobilePhones)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-success">Cep Telefonu</span></td>
+                                    <td>@item.Model</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.IMEI))
+                                        {
+                                            <span>@item.IMEI</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">IMEI yok</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.UserName) && !string.IsNullOrEmpty(item.UserSurname))
+                                        {
+                                            <span>@item.UserName @item.UserSurname</span>
+                                            @if (!string.IsNullOrEmpty(item.Memory))
+                                            {
+                                                <br>
+                                                <small class="text-muted">@item.Memory</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Atanmamýþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            <span>@item.PurchaseDate.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            var years = (DateTime.Now - item.PurchaseDate.Value).Days / 365;
+                                            <span class="badge bg-warning">@years yýl</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsFaulty)
+                                        {
+                                            <span class="badge bg-danger">Arýzalý</span>
+                                        }
+                                        else if (item.IsInWarehouse)
+                                        {
+                                            <span class="badge bg-warning">Depoda</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/MobilePhone/Details/@item.Id" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/MobilePhone/Edit/@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+
+                        <!-- Kulaklýklar -->
+                        @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "JabraHeadset")
+                        {
+                            @foreach (var item in Model.OldJabraHeadsets)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-dark">Kulaklýk</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.UserName) && !string.IsNullOrEmpty(item.UserSurname))
+                                        {
+                                            <span>@item.UserName @item.UserSurname</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Atanmamýþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            <span>@item.PurchaseDate.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            var years = (DateTime.Now - item.PurchaseDate.Value).Days / 365;
+                                            <span class="badge bg-warning">@years yýl</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsFaulty)
+                                        {
+                                            <span class="badge bg-danger">Arýzalý</span>
+                                        }
+                                        else if (item.IsInWarehouse)
+                                        {
+                                            <span class="badge bg-warning">Depoda</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/JabraHeadset/Details/@item.Id" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/JabraHeadset/Edit/@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+
+                        <!-- Yazýcýlar -->
+                        @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "Printer")
+                        {
+                            @foreach (var item in Model.OldPrinters)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">Yazýcý</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Location))
+                                        {
+                                            <span>@item.Location</span>
+                                            @if (!string.IsNullOrEmpty(item.IP))
+                                            {
+                                                <br>
+                                                <small class="text-muted">IP: @item.IP</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Konum belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            <span>@item.PurchaseDate.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Belirtilmemiþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PurchaseDate.HasValue)
+                                        {
+                                            var years = (DateTime.Now - item.PurchaseDate.Value).Days / 365;
+                                            <span class="badge bg-warning">@years yýl</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsFaulty)
+                                        {
+                                            <span class="badge bg-danger">Arýzalý</span>
+                                        }
+                                        else if (item.IsInWarehouse)
+                                        {
+                                            <span class="badge bg-warning">Depoda</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/Printer/Details/@item.Id" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/Printer/Edit/@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Özet Bilgiler -->
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-info-circle"></i>
+                <strong>
+                    @if (!string.IsNullOrEmpty(activeFilter))
+                    {
+                        @activeFilterName
+                    }
+                    else
+                    {
+                        @("Tüm Cihazlar")
+                    }
+                    - @Model.ThresholdYears yýldan daha eski toplam @Model.TotalOldDevices cihaz bulundu:
+                </strong>
+                <div class="row mt-2">
+                    @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "Computer")
+                    {
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <span class="badge bg-primary fs-6">@Model.OldComputers.Count</span>
+                                <br><small>Bilgisayar</small>
+                            </div>
+                        </div>
+                    }
+
+                    @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "DisplayMonitor")
+                    {
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <span class="badge bg-info fs-6">@Model.OldDisplayMonitors.Count</span>
+                                <br><small>Monitör</small>
+                            </div>
+                        </div>
+                    }
+
+                    @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "MobilePhone")
+                    {
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <span class="badge bg-success fs-6">@Model.OldMobilePhones.Count</span>
+                                <br><small>Cep Telefonu</small>
+                            </div>
+                        </div>
+                    }
+
+                    @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "JabraHeadset")
+                    {
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <span class="badge bg-dark fs-6">@Model.OldJabraHeadsets.Count</span>
+                                <br><small>Kulaklýk</small>
+                            </div>
+                        </div>
+                    }
+
+                    @if (string.IsNullOrEmpty(activeFilter) || activeFilter == "Printer")
+                    {
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <span class="badge bg-secondary fs-6">@Model.OldPrinters.Count</span>
+                                <br><small>Yazýcý</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="mt-3">
+                    <small><strong>Not:</strong> Alým tarihi @Model.CutoffDate.ToString("dd.MM.yyyy") tarihinden önceki cihazlar listelenmektedir.</small>
+                </div>
+            </div>
+
+            <!-- Durum Ýstatistikleri -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-success">Aktif Cihazlar</h5>
+                            <h3 class="text-success">
+                                @{
+                                    var activeCount = Model.OldComputers.Count(c => !c.IsFaulty && !c.IsInWarehouse) +
+                                    Model.OldDisplayMonitors.Count(c => !c.IsFaulty && !c.IsInWarehouse) +
+                                    Model.OldMobilePhones.Count(c => !c.IsFaulty && !c.IsInWarehouse) +
+                                    Model.OldJabraHeadsets.Count(c => !c.IsFaulty && !c.IsInWarehouse) +
+                                    Model.OldPrinters.Count(c => !c.IsFaulty && !c.IsInWarehouse);
+                                }
+                                @activeCount
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-warning">Depodaki Cihazlar</h5>
+                            <h3 class="text-warning">
+                                @{
+                                    var warehouseCount = Model.OldComputers.Count(c => c.IsInWarehouse) +
+                                    Model.OldDisplayMonitors.Count(c => c.IsInWarehouse) +
+                                    Model.OldMobilePhones.Count(c => c.IsInWarehouse) +
+                                    Model.OldJabraHeadsets.Count(c => c.IsInWarehouse) +
+                                    Model.OldPrinters.Count(c => c.IsInWarehouse);
+                                }
+                                @warehouseCount
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-danger">Arýzalý Cihazlar</h5>
+                            <h3 class="text-danger">
+                                @{
+                                    var faultyCount = Model.OldComputers.Count(c => c.IsFaulty) +
+                                    Model.OldDisplayMonitors.Count(c => c.IsFaulty) +
+                                    Model.OldMobilePhones.Count(c => c.IsFaulty) +
+                                    Model.OldJabraHeadsets.Count(c => c.IsFaulty) +
+                                    Model.OldPrinters.Count(c => c.IsFaulty);
+                                }
+                                @faultyCount
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success text-center">
+                <i class="bi bi-check-circle-fill fs-1 d-block mb-3"></i>
+                <h4>Harika! Eski cihaz bulunamadý</h4>
+                <p class="mb-0">@Model.ThresholdYears yýldan daha eski cihaz sistemde bulunmuyor.</p>
+            </div>
+        }
+    </div>
+    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+        <small class="text-muted">Rapor oluþturulma: @Model.GeneratedDate.ToString("dd.MM.yyyy HH:mm")</small>
+        <div>
+            <button class="btn btn-outline-success me-2" onclick="exportToExcel()">
+                <i class="bi bi-file-excel me-1"></i>Excel'e Aktar
+            </button>
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Yazdýr
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+        .page-header h1 {
+            color: #495057;
+            font-weight: 600;
+        }
+
+    .table th {
+        font-weight: 600;
+        color: #495057;
+        border-top: none;
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table-responsive {
+        border-radius: 0.375rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .fs-6 {
+        font-size: 1rem !important;
+    }
+
+    @@media print {
+        .btn, .card-footer, .page-header {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .table {
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            border: 1px solid #000;
+            color: #000 !important;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-sm {
+            padding: 0.125rem 0.25rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<script>
+    function exportToExcel() {
+        // Basit Excel export fonksiyonu
+        var table = document.querySelector('.table');
+        var wb = XLSX.utils.table_to_book(table, { sheet: "Eski Cihazlar" });
+        var filename = 'Eski_Cihazlar_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+        XLSX.writeFile(wb, filename);
+    }
+
+    // Excel export için SheetJS kütüphanesi (CDN'den yüklenecek)
+    if (typeof XLSX === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        document.head.appendChild(script);
+    }
+</script>

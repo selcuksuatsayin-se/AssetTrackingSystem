@@ -1,0 +1,30 @@
+﻿@model AssetTrackingSystem.Models.ViewModels.ReportViewModel
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="bi bi-file-earmark-text me-2"></i>@Model.ReportTitle</h1>
+        <p>@Model.ReportDescription | <small>@DateTime.Now.ToString("dd.MM.yyyy HH:mm")</small></p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <!-- Filtreleme Alanı (Opsiyonel) -->
+            @if (ViewBag.HasFilter ?? false)
+            {
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="Filtrele...">
+                    </div>
+                </div>
+            }
+
+            <!-- Rapor İçeriği -->
+            @RenderBody()
+
+            <!-- Footer -->
+            <div class="mt-4 text-end">
+                <small class="text-muted">Toplam Kayıt: @Model.TotalRecords</small>
+            </div>
+        </div>
+    </div>
+</div>

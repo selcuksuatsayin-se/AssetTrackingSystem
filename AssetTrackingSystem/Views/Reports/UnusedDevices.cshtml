@@ -1,0 +1,440 @@
+@model AssetTrackingSystem.Models.ViewModels.UnusedDevicesReportViewModel
+@{
+    ViewData["Title"] = "Kullanýlmayan Cihazlar - Demirbaþ Takip Sistemi";
+}
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="bi bi-clock-history me-2"></i>@Model.ReportTitle</h1>
+        <p class="text-muted">@Model.ReportDescription</p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            @if (Model.TotalUnusedDevices > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover" id="unusedDevicesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tür</th>
+                                <th>Model</th>
+                                <th>Seri No / IMEI</th>
+                                <th>Kullanýcý / Konum</th>
+                                <th>Son Kullaným</th>
+                                <th>Geçen Süre</th>
+                                <th>Durum</th>
+                                <th>Ýþlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var allUnusedDevices = new List<(string type, string badge, object device, string controller)>();
+
+                                foreach (var item in Model.UnusedComputers)
+                                {
+                                    allUnusedDevices.Add(("Bilgisayar", "bg-primary", item, "Computer"));
+                                }
+                                foreach (var item in Model.UnusedDisplayMonitors)
+                                {
+                                    allUnusedDevices.Add(("Monitör", "bg-info", item, "DisplayMonitor"));
+                                }
+                                foreach (var item in Model.UnusedMobilePhones)
+                                {
+                                    allUnusedDevices.Add(("Cep Telefonu", "bg-success", item, "MobilePhone"));
+                                }
+                                foreach (var item in Model.UnusedJabraHeadsets)
+                                {
+                                    allUnusedDevices.Add(("Kulaklýk", "bg-secondary", item, "JabraHeadset"));
+                                }
+                                foreach (var item in Model.UnusedPrinters)
+                                {
+                                    allUnusedDevices.Add(("Yazýcý", "bg-dark", item, "Printer"));
+                                }
+
+                                // Sort by last used date (oldest first)
+                                allUnusedDevices = allUnusedDevices.OrderBy(d => GetLastUsedDate(d.device)).ToList();
+                            }
+
+                            @foreach (var deviceInfo in allUnusedDevices)
+                            {
+                                <tr>
+                                    <td><span class="badge @deviceInfo.badge">@deviceInfo.type</span></td>
+                                    <td>@GetModel(deviceInfo.device)</td>
+                                    <td>@GetSerialNumber(deviceInfo.device)</td>
+                                    <td>@GetUserOrLocation(deviceInfo.device)</td>
+                                    <td>
+                                        @if (GetLastUsedDate(deviceInfo.device).HasValue)
+                                        {
+                                            <span>@GetLastUsedDate(deviceInfo.device).Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Hiç kullanýlmamýþ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (GetLastUsedDate(deviceInfo.device).HasValue)
+                                        {
+                                            var days = (DateTime.Now - GetLastUsedDate(deviceInfo.device).Value).Days;
+                                            var months = days / 30;
+                                            var years = days / 365;
+                                            var dayClass = days > 180 ? "text-danger" : days > 90 ? "text-warning" : "text-info";
+
+                                            <span class="@dayClass fw-bold" title="@days gün">
+                                                @if (years >= 1)
+                                                {
+                                                    @($"{years} yýl")
+                                                }
+                                                else if (months >= 1)
+                                                {
+                                                    @($"{months} ay")
+                                                }
+                                                else
+                                                {
+                                                    @($"{days} gün")
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@Html.Raw(GetStatusText(deviceInfo.device))</td>
+                                    <td>
+                                        <a href="/@deviceInfo.controller/Details/@GetId(deviceInfo.device)" class="btn btn-sm btn-outline-primary" title="Detaylarý Görüntüle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/@deviceInfo.controller/Edit/@GetId(deviceInfo.device)" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success m-4">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Harika!</strong> Kullanýlmayan cihaz bulunmamaktadýr.
+                    @if (Model.CutoffDate.HasValue)
+                    {
+                        <span>@Model.CutoffDate.Value.ToString("dd.MM.yyyy") tarihinden sonra tüm cihazlarýnýz aktif kullanýmda!</span>
+                    }
+                    else
+                    {
+                        <span>Tüm cihazlarýnýz aktif kullanýmda!</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Kart Alt Bilgisi - Excel ve Yazdýrma Butonlarý -->
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+            <small class="text-muted">Rapor oluþturulma: @Model.GeneratedDate.ToString("dd.MM.yyyy HH:mm")</small>
+            @if (Model.TotalUnusedDevices > 0)
+            {
+                <div>
+                    <button class="btn btn-outline-success me-2" onclick="exportToExcel()">
+                        <i class="bi bi-file-excel me-1"></i>Excel'e Aktar
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Yazdýr
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.TotalUnusedDevices > 0)
+    {
+        <!-- Kullanýlmayan Cihaz Daðýlýmý - FaultyDevices'teki gibi -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Kullanýlmayan Cihaz Daðýlýmý</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @if (Model.UnusedComputers.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-primary fs-6 mb-1">@Model.UnusedComputers.Count</div>
+                                        <div class="small text-muted">Bilgisayar</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.UnusedDisplayMonitors.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-info fs-6 mb-1">@Model.UnusedDisplayMonitors.Count</div>
+                                        <div class="small text-muted">Monitör</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.UnusedMobilePhones.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-success fs-6 mb-1">@Model.UnusedMobilePhones.Count</div>
+                                        <div class="small text-muted">Telefon</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.UnusedJabraHeadsets.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-warning fs-6 mb-1">@Model.UnusedJabraHeadsets.Count</div>
+                                        <div class="small text-muted">Kulaklýk</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.UnusedPrinters.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-secondary fs-6 mb-1">@Model.UnusedPrinters.Count</div>
+                                        <div class="small text-muted">Yazýcý</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Rapor Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <strong>Rapor Tarihi:</strong> @DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                            <div class="col-12 mb-2">
+                                <strong>Toplam Kullanýlmayan:</strong> @Model.TotalUnusedDevices cihaz
+                            </div>
+                            <div class="col-12 mb-2">
+                                <strong>Kesim Tarihi:</strong> @Model.CutoffDate?.ToString("dd.MM.yyyy")
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    Bu rapor son kullaným tarihi @Model.CutoffDate?.ToString("dd.MM.yyyy") tarihinden önce olan cihazlarý gösterir.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    private DateTime? GetLastUsedDate(object device)
+    {
+        return device switch
+        {
+            Computer c => c.LastUsedDate,
+            DisplayMonitor d => d.LastUsedDate,
+            MobilePhone m => m.LastUsedDate,
+            JabraHeadset j => j.LastUsedDate,
+            Printer p => p.LastUsedDate,
+            _ => null
+        };
+    }
+
+    private string GetModel(object device)
+    {
+        return device switch
+        {
+            Computer c => c.Model,
+            DisplayMonitor d => d.Model,
+            MobilePhone m => m.Model,
+            JabraHeadset j => j.Model,
+            Printer p => p.Model,
+            _ => ""
+        };
+    }
+
+    private string GetSerialNumber(object device)
+    {
+        return device switch
+        {
+            Computer c => c.SerialNumber,
+            DisplayMonitor d => d.SerialNumber,
+            MobilePhone m => m.IMEI,
+            JabraHeadset j => j.SerialNumber,
+            Printer p => p.SerialNumber,
+            _ => ""
+        };
+    }
+
+    private string GetUserOrLocation(object device)
+    {
+        return device switch
+        {
+            Computer c => !string.IsNullOrEmpty(c.UserName) && !string.IsNullOrEmpty(c.UserSurname)
+                ? $"{c.UserName} {c.UserSurname}" : "Atanmamýþ",
+            DisplayMonitor d => !string.IsNullOrEmpty(d.UserName) && !string.IsNullOrEmpty(d.UserSurname)
+                ? $"{d.UserName} {d.UserSurname}" : "Atanmamýþ",
+            MobilePhone m => !string.IsNullOrEmpty(m.UserName) && !string.IsNullOrEmpty(m.UserSurname)
+                ? $"{m.UserName} {m.UserSurname}" : "Atanmamýþ",
+            JabraHeadset j => !string.IsNullOrEmpty(j.UserName) && !string.IsNullOrEmpty(j.UserSurname)
+                ? $"{j.UserName} {j.UserSurname}" : "Atanmamýþ",
+            Printer p => !string.IsNullOrEmpty(p.Location) ? p.Location : "Konum Belirtilmemiþ",
+            _ => "Bilinmiyor"
+        };
+    }
+
+    private int GetId(object device)
+    {
+        return device switch
+        {
+            Computer c => c.Id,
+            DisplayMonitor d => d.Id,
+            MobilePhone m => m.Id,
+            JabraHeadset j => j.Id,
+            Printer p => p.Id,
+            _ => 0
+        };
+    }
+
+    private string GetStatusText(object device)
+    {
+        bool isFaulty = device switch
+        {
+            Computer c => c.IsFaulty,
+            DisplayMonitor d => d.IsFaulty,
+            MobilePhone m => m.IsFaulty,
+            JabraHeadset j => j.IsFaulty,
+            Printer p => p.IsFaulty,
+            _ => false
+        };
+
+        bool isInWarehouse = device switch
+        {
+            Computer c => c.IsInWarehouse,
+            DisplayMonitor d => d.IsInWarehouse,
+            MobilePhone m => m.IsInWarehouse,
+            JabraHeadset j => j.IsInWarehouse,
+            Printer p => p.IsInWarehouse,
+            _ => false
+        };
+
+        if (isFaulty)
+            return "<span class='badge bg-danger'>Arýzalý</span>";
+        else if (isInWarehouse)
+            return "<span class='badge bg-warning'>Depoda</span>";
+        else
+            return "<span class='badge bg-success'>Aktif</span>";
+    }
+}
+
+<style>
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+        .page-header h1 {
+            color: #495057;
+            font-weight: 600;
+        }
+
+    .table th {
+        font-weight: 600;
+        color: #495057;
+        border-top: none;
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+        .badge.fs-6 {
+            font-size: 1rem !important;
+            padding: 0.5rem 0.75rem;
+        }
+
+    .text-danger.fw-bold,
+    .text-warning.fw-bold,
+    .text-info.fw-bold {
+        font-weight: 700 !important;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    @@media print {
+        .btn, .card-footer, .alert,
+        .card:first-child /* Filtreleme kartý */ {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .page-header {
+            border-bottom: 2px solid #000;
+        }
+
+        .table {
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            border: 1px solid #000;
+            color: #000 !important;
+            background-color: white !important;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-sm {
+            padding: 0.125rem 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .card-footer {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    function exportToExcel() {
+        // Basit Excel export fonksiyonu
+        var table = document.getElementById('unusedDevicesTable');
+        var wb = XLSX.utils.table_to_book(table, { sheet: "Kullanýlmayan Cihazlar" });
+        var filename = 'Kullanilmayan_Cihazlar_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+        XLSX.writeFile(wb, filename);
+    }
+
+    // Excel export için SheetJS kütüphanesi (CDN'den yüklenecek)
+    if (typeof XLSX === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        document.head.appendChild(script);
+    }
+</script>

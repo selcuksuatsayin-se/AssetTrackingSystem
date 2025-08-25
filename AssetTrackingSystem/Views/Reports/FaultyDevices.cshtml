@@ -1,0 +1,207 @@
+@model AssetTrackingSystem.Models.ViewModels.FaultyDevicesReportViewModel
+
+@{
+    ViewData["Title"] = "Arýzalý Cihazlar - Demirbaþ Takip Sistemi";
+}
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="bi bi-exclamation-triangle me-2"></i>Arýzalý Cihazlar</h1>
+        <p>Toplam @Model.TotalFaultyDevices arýzalý cihaz</p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            @if (Model.TotalFaultyDevices > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tür</th>
+                                <th>Model</th>
+                                <th>Seri No / IMEI</th>
+                                <th>Kullanýcý / Konum</th>
+                                <th>Arýza Notu</th>
+                                <th>Eklenme Tarihi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Bilgisayarlar -->
+                            @foreach (var item in Model.FaultyComputers)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-primary">Bilgisayar</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamýþ")</td>
+                                    <td>@(!string.IsNullOrEmpty(item.FaultNote) ? item.FaultNote : "Arýza notu girilmemiþ")</td>
+                                    <td>@item.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                </tr>
+                            }
+
+                            <!-- Monitörler -->
+                            @foreach (var item in Model.FaultyDisplayMonitors)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-info">Monitör</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamýþ")</td>
+                                    <td>@(!string.IsNullOrEmpty(item.FaultNote) ? item.FaultNote : "Arýza notu girilmemiþ")</td>
+                                    <td>@item.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                </tr>
+                            }
+
+                            <!-- Cep Telefonlarý -->
+                            @foreach (var item in Model.FaultyMobilePhones)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-success">Telefon</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.IMEI</td>
+                                    <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamýþ")</td>
+                                    <td>@(!string.IsNullOrEmpty(item.FaultNote) ? item.FaultNote : "Arýza notu girilmemiþ")</td>
+                                    <td>@item.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                </tr>
+                            }
+
+                            <!-- Kulaklýklar -->
+                            @foreach (var item in Model.FaultyJabraHeadsets)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-warning">Kulaklýk</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>@(!string.IsNullOrEmpty(item.UserName) ? $"{item.UserName} {item.UserSurname}" : "Atanmamýþ")</td>
+                                    <td>@(!string.IsNullOrEmpty(item.FaultNote) ? item.FaultNote : "Arýza notu girilmemiþ")</td>
+                                    <td>@item.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                </tr>
+                            }
+
+                            <!-- Yazýcýlar -->
+                            @foreach (var item in Model.FaultyPrinters)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">Yazýcý</span></td>
+                                    <td>@item.Model</td>
+                                    <td>@item.SerialNumber</td>
+                                    <td>@(!string.IsNullOrEmpty(item.Location) ? item.Location : "Konum belirtilmemiþ")</td>
+                                    <td>@(!string.IsNullOrEmpty(item.FaultNote) ? item.FaultNote : "Arýza notu girilmemiþ")</td>
+                                    <td>@item.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success m-4">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Arýzalý cihaz bulunmamaktadýr.
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.TotalFaultyDevices > 0)
+    {
+        <!-- Özet Ýstatistikler -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Arýza Daðýlýmý</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @if (Model.FaultyComputers.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-primary fs-6 mb-1">@Model.FaultyComputers.Count</div>
+                                        <div class="small text-muted">Bilgisayar</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.FaultyDisplayMonitors.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-info fs-6 mb-1">@Model.FaultyDisplayMonitors.Count</div>
+                                        <div class="small text-muted">Monitör</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.FaultyMobilePhones.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-success fs-6 mb-1">@Model.FaultyMobilePhones.Count</div>
+                                        <div class="small text-muted">Telefon</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.FaultyJabraHeadsets.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-warning fs-6 mb-1">@Model.FaultyJabraHeadsets.Count</div>
+                                        <div class="small text-muted">Kulaklýk</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.FaultyPrinters.Any())
+                            {
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="badge bg-secondary fs-6 mb-1">@Model.FaultyPrinters.Count</div>
+                                        <div class="small text-muted">Yazýcý</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Rapor Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <strong>Rapor Tarihi:</strong> @DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                            <div class="col-12 mb-2">
+                                <strong>Toplam Arýzalý:</strong> @Model.TotalFaultyDevices cihaz
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    Bu rapor sistemdeki tüm arýzalý olarak iþaretlenmiþ cihazlarý gösterir.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .badge.fs-6 {
+        font-size: 1rem !important;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .badge {
+        font-weight: 600;
+    }
+</style>

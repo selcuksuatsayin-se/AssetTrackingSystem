@@ -1,0 +1,153 @@
+@model AssetTrackingSystem.Models.ViewModels.WarrantyReportViewModel
+@{
+    ViewData["Title"] = "Garanti Durumu - Demirbaþ Takip Sistemi";
+}
+<div class="page-header">
+    <h1>@Model.ReportTitle</h1>
+    <p>@Model.ReportDescription</p>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Garanti Durumu</h5>
+        <div class="d-flex gap-2">
+            <button id="toggleExpiredBtn" class="btn btn-outline-danger">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Garantisi Bitmiþ Cihazlarý Göster
+            </button>
+            <form method="get" class="d-flex">
+                <div class="input-group" style="width: 200px;">
+                    <input type="number" class="form-control" name="warningThresholdMonths"
+                           value="@Model.WarningThresholdMonths" min="1" max="36" />
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-filter"></i> Filtrele
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Devices.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Cihaz Türü</th>
+                            <th>Model</th>
+                            <th>Kullanýcý/Konum</th>
+                            <th>Seri No</th>
+                            <th>Satýn Alma Tarihi</th>
+                            <th>Garanti Bitiþ</th>
+                            <th>Kalan Gün</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeWarrantyDevices">
+                        @foreach (var device in Model.Devices.Where(d => d.RemainingDays >= 0))
+                        {
+                            <tr>
+                                <td>@device.DeviceTypeDisplayName</td>
+                                <td>@device.Model</td>
+                                <td>@device.FullUserName</td>
+                                <td><code>@device.SerialNumber</code></td>
+                                <td>@device.PurchaseDate.ToString("dd.MM.yyyy")</td>
+                                <td>@device.WarrantyEndDate.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    @if (device.RemainingDays > 0)
+                                    {
+                                        <span class="badge bg-primary">@device.RemainingDays gün</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">Bugün bitiyor</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="@device.StatusClass">
+                                        <i class="bi @(device.StatusClass == "text-danger" ? "bi-exclamation-triangle" :
+                                                                                                device.StatusClass == "text-warning" ? "bi-exclamation-circle" : "bi-check-circle")"></i>
+                                @device.Status
+                            </span>
+                        </td>
+                    </tr>
+                                        }
+                    </tbody>
+                    <tbody id="expiredWarrantyDevices" style="display: none;">
+                        @foreach (var device in Model.Devices.Where(d => d.RemainingDays < 0))
+                        {
+                            <tr class="table-danger">
+                                <td>@device.DeviceTypeDisplayName</td>
+                                <td>@device.Model</td>
+                                <td>@device.FullUserName</td>
+                                <td><code>@device.SerialNumber</code></td>
+                                <td>@device.PurchaseDate.ToString("dd.MM.yyyy")</td>
+                                <td>@device.WarrantyEndDate.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <span class="badge bg-danger">@Math.Abs(device.RemainingDays) gün geçti</span>
+                                </td>
+                                <td>
+                                    <span class="text-danger">
+                                        <i class="bi bi-x-circle"></i>
+                                        Garanti Bitmiþ
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="activeInfo" class="alert alert-info mt-3">
+                <i class="bi bi-info-circle"></i>
+                Toplam @Model.Devices.Count(d => d.RemainingDays >= 0) cihazýn garantisi @Model.WarningThresholdMonths ay içinde bitiyor.
+            </div>
+
+            <div id="expiredInfo" class="alert alert-danger mt-3" style="display: none;">
+                <i class="bi bi-exclamation-triangle"></i>
+                Toplam @Model.Devices.Count(d => d.RemainingDays < 0) cihazýn garantisi bitmiþ.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i> @Model.WarningThresholdMonths ay içinde garantisi bitecek cihaz bulunamadý.
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleExpiredBtn');
+        const activeDevices = document.getElementById('activeWarrantyDevices');
+        const expiredDevices = document.getElementById('expiredWarrantyDevices');
+        const activeInfo = document.getElementById('activeInfo');
+        const expiredInfo = document.getElementById('expiredInfo');
+        let showingExpired = false;
+
+        toggleBtn.addEventListener('click', function() {
+            showingExpired = !showingExpired;
+
+            if (showingExpired) {
+                // Garantisi bitmiþ cihazlarý göster
+                activeDevices.style.display = 'none';
+                expiredDevices.style.display = 'table-row-group';
+                activeInfo.style.display = 'none';
+                expiredInfo.style.display = 'block';
+
+                toggleBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i>Aktif Garantili Cihazlarý Göster';
+                toggleBtn.className = 'btn btn-outline-success';
+            } else {
+                // Aktif garantili cihazlarý göster
+                activeDevices.style.display = 'table-row-group';
+                expiredDevices.style.display = 'none';
+                activeInfo.style.display = 'block';
+                expiredInfo.style.display = 'none';
+
+                toggleBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Garantisi Bitmiþ Cihazlarý Göster';
+                toggleBtn.className = 'btn btn-outline-danger';
+            }
+        });
+    });
+</script>
