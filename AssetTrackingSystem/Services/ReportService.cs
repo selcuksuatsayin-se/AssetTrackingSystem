@@ -1,9 +1,6 @@
-﻿
-using AssetTrackingSystem.Data;
-using AssetTrackingSystem.Models;
+﻿using AssetTrackingSystem.Data;
 using AssetTrackingSystem.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
 
 namespace AssetTrackingSystem.Services
 {
@@ -56,7 +53,6 @@ namespace AssetTrackingSystem.Services
 
         public async Task<UserDevicesReportViewModel> GetUserDevicesReportAsync(string userName, string userSurname)
         {
-            // Normalize search strings
             var normalizedName = userName?.Trim().ToLower() ?? string.Empty;
             var normalizedSurname = userSurname?.Trim().ToLower() ?? string.Empty;
 
@@ -75,11 +71,11 @@ namespace AssetTrackingSystem.Services
                     return viewModel;
                 }
 
-                // Kullanıcı adı ve soyadını kontrol et
+                // Kullanıcı adı ve soyadı kontrolü
                 bool hasName = !string.IsNullOrEmpty(normalizedName);
                 bool hasSurname = !string.IsNullOrEmpty(normalizedSurname);
 
-                // Computers - NULL kontrolü ekle
+                // Computers - NULL kontrolü 
                 viewModel.UserComputers = await _context.Computers
                     .Where(c =>
                         (!hasName || (c.UserName != null && c.UserName.Trim().ToLower().Contains(normalizedName))) &&
@@ -88,7 +84,7 @@ namespace AssetTrackingSystem.Services
                     .OrderBy(c => c.Model)
                     .ToListAsync();
 
-                // Display Monitors - NULL kontrolü ekle
+                // Display Monitors - NULL kontrolü
                 viewModel.UserDisplayMonitors = await _context.DisplayMonitors
                     .Where(d =>
                         (!hasName || (d.UserName != null && d.UserName.Trim().ToLower().Contains(normalizedName))) &&
@@ -97,7 +93,7 @@ namespace AssetTrackingSystem.Services
                     .OrderBy(d => d.Model)
                     .ToListAsync();
 
-                // Mobile Phones - NULL kontrolü ekle
+                // Mobile Phones - NULL kontrolü
                 viewModel.UserMobilePhones = await _context.MobilePhones
                     .Where(m =>
                         (!hasName || (m.UserName != null && m.UserName.Trim().ToLower().Contains(normalizedName))) &&
@@ -106,7 +102,7 @@ namespace AssetTrackingSystem.Services
                     .OrderBy(m => m.Model)
                     .ToListAsync();
 
-                // Jabra Headsets - NULL kontrolü ekle
+                // Jabra Headsets - NULL kontrolü
                 viewModel.UserJabraHeadsets = await _context.JabraHeadsets
                     .Where(j =>
                         (!hasName || (j.UserName != null && j.UserName.Trim().ToLower().Contains(normalizedName))) &&
@@ -115,7 +111,7 @@ namespace AssetTrackingSystem.Services
                     .OrderBy(j => j.Model)
                     .ToListAsync();
 
-                // İlk bulunan kullanıcının adını al (gösterim için)
+                // İlk bulunan kullanıcının adı alınır
                 var firstComputer = viewModel.UserComputers.FirstOrDefault();
                 var firstMonitor = viewModel.UserDisplayMonitors.FirstOrDefault();
                 var firstPhone = viewModel.UserMobilePhones.FirstOrDefault();
@@ -158,111 +154,6 @@ namespace AssetTrackingSystem.Services
                 return viewModel;
             }
         }
-
-        //public async Task<UserDevicesReportViewModel> GetUserDevicesReportAsync(string userName, string userSurname)
-        //{
-        //    // Normalize search strings
-        //    var normalizedName = userName?.Trim().ToLower() ?? string.Empty;
-        //    var normalizedSurname = userSurname?.Trim().ToLower() ?? string.Empty;
-
-        //    var viewModel = new UserDevicesReportViewModel
-        //    {
-        //        SearchUserName = userName,
-        //        SearchUserSurname = userSurname,
-        //        ReportDescription = $"{userName} {userSurname} kullanıcısına zimmetli tüm cihazlar"
-        //    };
-
-        //    try
-        //    {
-        //        if (string.IsNullOrEmpty(userName) && string.IsNullOrEmpty(userSurname))
-        //        {
-        //            viewModel.ErrorMessage = "En az bir arama kriteri giriniz (ad veya soyad)";
-        //            return viewModel;
-        //        }
-
-        //        // Kullanıcı adı ve soyadını kontrol et
-        //        bool hasName = !string.IsNullOrEmpty(normalizedName);
-        //        bool hasSurname = !string.IsNullOrEmpty(normalizedSurname);
-
-        //        // Computers
-        //        viewModel.UserComputers = await _context.Computers
-        //            .Where(c =>
-        //                (!hasName || (c.UserName != null && c.UserName.Trim().ToLower().Contains(normalizedName))) &&
-        //                (!hasSurname || (c.UserSurname != null && c.UserSurname.Trim().ToLower().Contains(normalizedSurname)))
-        //            )
-        //            .OrderBy(c => c.Model)
-        //            .ToListAsync();
-
-        //        // Display Monitors
-        //        viewModel.UserDisplayMonitors = await _context.DisplayMonitors
-        //            .Where(d =>
-        //                (!hasName || (d.UserName != null && d.UserName.Trim().ToLower().Contains(normalizedName))) &&
-        //                (!hasSurname || (d.UserSurname != null && d.UserSurname.Trim().ToLower().Contains(normalizedSurname)))
-        //            )
-        //            .OrderBy(d => d.Model)
-        //            .ToListAsync();
-
-        //        // Mobile Phones
-        //        viewModel.UserMobilePhones = await _context.MobilePhones
-        //            .Where(m =>
-        //                (!hasName || (m.UserName != null && m.UserName.Trim().ToLower().Contains(normalizedName))) &&
-        //                (!hasSurname || (m.UserSurname != null && m.UserSurname.Trim().ToLower().Contains(normalizedSurname)))
-        //            )
-        //            .OrderBy(m => m.Model)
-        //            .ToListAsync();
-
-        //        // Jabra Headsets
-        //        viewModel.UserJabraHeadsets = await _context.JabraHeadsets
-        //            .Where(j =>
-        //                (!hasName || (j.UserName != null && j.UserName.Trim().ToLower().Contains(normalizedName))) &&
-        //                (!hasSurname || (j.UserSurname != null && j.UserSurname.Trim().ToLower().Contains(normalizedSurname)))
-        //            )
-        //            .OrderBy(j => j.Model)
-        //            .ToListAsync();
-
-        //        // İlk bulunan kullanıcının adını al (gösterim için)
-        //        var firstComputer = viewModel.UserComputers.FirstOrDefault();
-        //        var firstMonitor = viewModel.UserDisplayMonitors.FirstOrDefault();
-        //        var firstPhone = viewModel.UserMobilePhones.FirstOrDefault();
-        //        var firstHeadset = viewModel.UserJabraHeadsets.FirstOrDefault();
-
-        //        if (firstComputer != null)
-        //        {
-        //            viewModel.FullUserName = $"{firstComputer.UserName} {firstComputer.UserSurname}";
-        //        }
-        //        else if (firstMonitor != null)
-        //        {
-        //            viewModel.FullUserName = $"{firstMonitor.UserName} {firstMonitor.UserSurname}";
-        //        }
-        //        else if (firstPhone != null)
-        //        {
-        //            viewModel.FullUserName = $"{firstPhone.UserName} {firstPhone.UserSurname}";
-        //        }
-        //        else if (firstHeadset != null)
-        //        {
-        //            viewModel.FullUserName = $"{firstHeadset.UserName} {firstHeadset.UserSurname}";
-        //        }
-        //        else
-        //        {
-        //            viewModel.ErrorMessage = "Kullanıcı bulunamadı";
-        //            return viewModel;
-        //        }
-
-        //        viewModel.TotalUserDevices = viewModel.UserComputers.Count +
-        //                                   viewModel.UserDisplayMonitors.Count +
-        //                                   viewModel.UserMobilePhones.Count +
-        //                                   viewModel.UserJabraHeadsets.Count;
-
-        //        viewModel.TotalRecords = viewModel.TotalUserDevices;
-
-        //        return viewModel;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        viewModel.ErrorMessage = $"Bir hata oluştu: {ex.Message}";
-        //        return viewModel;
-        //    }
-        //}
 
         public async Task<OldDevicesReportViewModel> GetOldDevicesReportAsync(int thresholdYears = 5)
         {
@@ -769,8 +660,6 @@ namespace AssetTrackingSystem.Services
 
         public async Task<List<WarehouseMovement>> GetRecentWarehouseMovementsAsync(int count = 10)
         {
-            // Gerçek bir uygulamada bu verileri ayrı bir WarehouseMovement tablosunda tutardık
-            // Şimdilik son değiştirilen cihazları getiriyoruz
             var movements = new List<WarehouseMovement>();
 
             // Son değiştirilen bilgisayarlar
@@ -804,8 +693,6 @@ namespace AssetTrackingSystem.Services
         private async Task AddWarehouseMovement(int deviceId, string deviceType, string model, string serialNumber,
             string userName, string userSurname, bool movedToWarehouse, string note, string location = null)
         {
-            // Gerçek bir uygulamada bu bilgileri bir WarehouseMovement tablosuna kaydederdik
-            // Şimdilik bu metod sadece bir placeholder
             await Task.CompletedTask;
         }
 
@@ -819,7 +706,7 @@ namespace AssetTrackingSystem.Services
                 WarningThresholdMonths = warningThresholdMonths
             };
 
-            // Tüm cihaz türlerini kontrol edip garanti durumunu hesaplayalım
+            // Tüm cihaz türlerini kontrol edilir ve garanti durumu hesaplanır
             var devices = new List<WarrantyDeviceInfo>();
 
             // Bilgisayarlar
@@ -871,7 +758,7 @@ namespace AssetTrackingSystem.Services
         private WarrantyDeviceInfo CreateWarrantyDeviceInfo(dynamic device, string deviceType)
         {
             var purchaseDate = (DateTime)device.PurchaseDate;
-            var warrantyEndDate = purchaseDate.AddYears(3); // 3 yıl garanti
+            var warrantyEndDate = purchaseDate.AddYears(3);
             var remainingDays = (warrantyEndDate - DateTime.Now).Days;
 
             var statusInfo = remainingDays switch
@@ -881,7 +768,6 @@ namespace AssetTrackingSystem.Services
                 _ => ("Garanti Kapsamında", "text-success")
             };
 
-            // Handle Printer differently since it has Location instead of UserName/UserSurname
             string fullUserName;
             if (deviceType == "Printer")
             {

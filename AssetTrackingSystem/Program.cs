@@ -30,7 +30,7 @@ var app = builder.Build();
 
 app.UseSession();
 
-// Auth middleware'ini ekleyin (ROUTE'LARDAN ÖNCE EKLENMELÝ)
+// Auth middleware Routelerden önce eklenir
 app.UseMiddleware<BasicAuthMiddleware>();
 
 // Configure the HTTP request pipeline.
@@ -48,5 +48,5 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}"); // PROGRAMIN BAÞLANGIÇ ADIMI BURASI
+    pattern: "{controller=Auth}/{action=Login}/{id?}"); // Programýn baþlangýcý
 app.Run();

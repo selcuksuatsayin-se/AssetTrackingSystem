@@ -2,7 +2,7 @@
 
 namespace AssetTrackingSystem.Models.ViewModels
 {
-    // Base ViewModel for all reports
+    // Tüm raporlar için base ViewModel
     public class ReportViewModel
     {
         public string ReportTitle { get; set; }

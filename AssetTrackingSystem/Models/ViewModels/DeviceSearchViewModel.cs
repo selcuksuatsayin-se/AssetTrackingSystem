@@ -49,14 +49,14 @@ namespace AssetTrackingSystem.Models.ViewModels
         // Arama Sonuçları
         public SearchResults Results { get; set; } = new SearchResults();
 
-        // Arama yapılıp yapılmadığını kontrol et
+        // Arama yapılıp yapılmadığı kontrol edilir
         public bool IsSearchPerformed => !string.IsNullOrEmpty(ModelSearch) ||
                                        !string.IsNullOrEmpty(BrandSearch) ||
                                        !string.IsNullOrEmpty(SerialNumberSearch) ||
                                        !string.IsNullOrEmpty(UserNameSearch) ||
                                        !string.IsNullOrEmpty(UserSurnameSearch);
 
-        // Arama kriterlerini temizle
+        // Arama kriterlerini temizleme
         public void ClearSearch()
         {
             ModelSearch = string.Empty;

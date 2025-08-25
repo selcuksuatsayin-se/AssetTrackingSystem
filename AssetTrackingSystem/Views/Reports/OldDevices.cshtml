@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Eski Cihazlar - Demirbaþ Takip Sistemi";
 
-    // Aktif filtre bilgisi - Daha güvenli yaklaþým
+    // Aktif filtre bilgisi
     var activeFilter = Context.Request.Query["deviceType"].FirstOrDefault() ?? "";
     var activeFilterName = activeFilter switch
     {

@@ -2,6 +2,9 @@
 
 namespace AssetTrackingSystem.Services
 {
+    /// <summary>
+    /// Dashboard için istatistiksel veri sağlayan servis arayüzü
+    /// </summary>
     public interface IDashboardService
     {
         /// <summary>
@@ -13,7 +16,7 @@ namespace AssetTrackingSystem.Services
         /// <summary>
         /// Belirli bir cihaz türünün sayısını getirir
         /// </summary>
-        /// <param name="deviceType">Cihaz türü</param>
+        /// <param name="deviceType">Cihaz türü (computer, displaymonitor, mobilephone, jabraheadset, printer)</param>
         /// <returns>Cihaz sayısı</returns>
         Task<int> GetDeviceCountAsync(string deviceType);
 
@@ -30,7 +33,7 @@ namespace AssetTrackingSystem.Services
         Task<List<RecentDeviceInfo>> GetRecentDevicesAsync();
 
         /// <summary>
-        /// Arızalı cihaz sayısını getirir
+        /// Arızalı olarak işaretlenmiş cihaz sayısını getirir
         /// </summary>
         /// <returns>Arızalı cihaz sayısı</returns>
         Task<int> GetFaultyDeviceCountAsync();

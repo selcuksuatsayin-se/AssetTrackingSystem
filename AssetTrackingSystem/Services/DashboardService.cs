@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AssetTrackingSystem.Services
 {
+    /// <summary>
+    /// Asset Tracking System için dashboard verilerini yöneten service sınıfı.
+    /// Sistem genelindeki cihaz istatistikleri, son eklenen cihazlar ve özet bilgileri sağlar.
+    /// </summary>
     public class DashboardService : IDashboardService
     {
         private readonly AssetTrackingDbContext _context;
@@ -132,8 +136,6 @@ namespace AssetTrackingSystem.Services
 
         public async Task<int> GetMovedToWarehouseThisMonthAsync()
         {
-            // Bu metod için CreatedDate yerine ayrı bir WarehouseMovementDate field'ı olması ideal
-            // Şimdilik IsInWarehouse = true olan ve bu ay oluşturulan cihazları sayacağız
             var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             var endOfMonth = startOfMonth.AddMonths(1);
 
@@ -203,7 +205,7 @@ namespace AssetTrackingSystem.Services
                         UserName = m.UserName,
                         UserSurname = m.UserSurname,
                         Model = m.Model,
-                        SerialNumber = m.IMEI, // MobilePhone için IMEI kullanıyoruz
+                        SerialNumber = m.IMEI,
                         CreatedDate = m.CreatedDate
                     }).ToList();
                     break;
@@ -236,7 +238,7 @@ namespace AssetTrackingSystem.Services
                     {
                         Id = p.Id,
                         DeviceType = "Printer",
-                        Location = p.Location, // Printer için Location kullanıyoruz
+                        Location = p.Location,
                         Model = p.Model,
                         SerialNumber = p.SerialNumber,
                         CreatedDate = p.CreatedDate

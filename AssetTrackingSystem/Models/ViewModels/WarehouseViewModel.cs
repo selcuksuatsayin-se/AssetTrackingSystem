@@ -74,14 +74,14 @@ namespace AssetTrackingSystem.Models.ViewModels
         [Display(Name = "Sıralama Yönü")]
         public string SortOrder { get; set; } = "desc"; // asc, desc
 
-        // Filtreleme yapılıp yapılmadığını kontrol et
+        // Filtreleme yapılıp yapılmadığını kontrol edilir
         public bool IsFiltered => DeviceType != "All" ||
                                 Status != "All" ||
                                 !string.IsNullOrEmpty(ModelFilter) ||
                                 DateFrom.HasValue ||
                                 DateTo.HasValue;
 
-        // Filtreyi temizle
+        // Filtreyi temizleme
         public void ClearFilter()
         {
             DeviceType = "All";

@@ -32,7 +32,6 @@ namespace AssetTrackingSystem.Controllers
         [HttpGet]
         public IActionResult UserDevices()
         {
-            // return View(new UserDevicesReportViewModel());
             return View(); // _Layout otomatik olarak kullanılacak
         }
 
@@ -81,16 +80,6 @@ namespace AssetTrackingSystem.Controllers
             public string UserSurname { get; set; }
         }
 
-        // ---- ESKİ CİHAZLAR ----
-        //[HttpGet]
-        //public async Task<IActionResult> OldDevices(int? thresholdYears)
-        //{
-        //    var threshold = thresholdYears ?? 5; // Varsayılan 5 yıl
-        //    var report = await _reportService.GetOldDevicesReportAsync(threshold);
-        //    return View(report);
-        //}
-
-        // ---- ESKİ CİHAZLAR ----
         // ---- ESKİ CİHAZLAR ----
         [HttpGet]
         public async Task<IActionResult> OldDevices(int? thresholdYears, string deviceType = null)
@@ -163,7 +152,7 @@ namespace AssetTrackingSystem.Controllers
         // ---- KULLANILMAYAN CİHAZLAR ----
         public async Task<IActionResult> UnusedDevices()
         {
-            // Varsayılan olarak 6 ay öncesini kullan
+            // Varsayılan olarak 3 ay öncesini kullan
             var sixMonthsAgo = DateTime.Now.AddMonths(-3);
             var report = await _reportService.GetUnusedDevicesReportAsync(sixMonthsAgo);
             return View(report);

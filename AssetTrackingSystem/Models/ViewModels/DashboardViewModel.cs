@@ -52,7 +52,7 @@ namespace AssetTrackingSystem.Models.ViewModels
 
         public string DisplayText => $"{Model} - {FullUserName}";
 
-        // Printer için location bilgisi (kullanıcı yerine)
+        // Printer için location bilgisi
         public string Location { get; set; }
         public string DisplayLocation => !string.IsNullOrEmpty(Location) ? Location : "Konum Belirtilmemiş";
     }

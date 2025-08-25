@@ -15,16 +15,12 @@ namespace AssetTrackingSystem.Middleware
                 ("admin1", "sifre1"),
                 ("admin2", "sifre2"),
                 ("admin3", "sifre3"),
-                ("admin4", "sifre4"),
-                ("selcuk", "selcuk"),
-                ("tayfun.uye", "155155")
-
             };
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Login sayfasını ve statik dosyaları bypass et
+            // Login sayfasını ve statik dosyaları bypass edilir
             if (context.Request.Path.StartsWithSegments("/Auth/Login") ||
                 context.Request.Path.StartsWithSegments("/login") ||
                 context.Request.Path.StartsWithSegments("/lib") ||

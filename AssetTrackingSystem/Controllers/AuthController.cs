@@ -9,9 +9,6 @@ namespace AssetTrackingSystem.Controllers
             ("admin1", "sifre1"),
             ("admin2", "sifre2"),
             ("admin3", "sifre3"),
-            ("admin4", "sifre4"),
-            ("selcuk", "selcuk"),
-            ("tayfun.uye", "155155")
         };
 
         [HttpGet]

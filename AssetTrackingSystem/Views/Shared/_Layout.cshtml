@@ -112,6 +112,7 @@
 
 
 
+
         /* UserDevices için özel stiller */
         .device-category {
             border-bottom: 1px solid #dee2e6;
@@ -168,26 +169,6 @@
         }
 
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -523,8 +504,6 @@
                         </li>
                     </ul>
 
-                    <!-- Sağ tarafta kullanıcı bilgileri ve çıkış butonu -->
-                    <!-- _Layout.cshtml - Çıkış ve Giriş linklerini güncelleyin -->
                     <ul class="navbar-nav ms-auto">
                         @if (Context.Session.GetString("IsAuthenticated") == "true")
                         {
@@ -582,7 +561,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
 
-            // Ana menü öğelerini kontrol et
+            // Ana menü öğeleri kontrolü
             document.querySelectorAll('.nav-link').forEach(link => {
                 if (link.getAttribute('href') === currentPath) {
                     link.classList.add('active');

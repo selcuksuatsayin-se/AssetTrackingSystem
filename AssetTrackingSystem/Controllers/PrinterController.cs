@@ -14,13 +14,11 @@ namespace AssetTrackingSystem.Controllers
             _context = context;
         }
 
-        // GET: Printer
         public async Task<IActionResult> Index()
         {
             return View(await _context.Printers.ToListAsync());
         }
 
-        // GET: Printer/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -38,15 +36,11 @@ namespace AssetTrackingSystem.Controllers
             return View(printer);
         }
 
-        // GET: Printer/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Printer/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Location,HostName,Model,IP,SerialNumber,Note,PurchaseDate,InvoiceStartDate,InvoiceEndDate,LastUsedDate,IsInWarehouse,IsFaulty,FaultNote,CreatedDate")] Printer printer)
@@ -60,7 +54,6 @@ namespace AssetTrackingSystem.Controllers
             return View(printer);
         }
 
-        // GET: Printer/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -76,9 +69,6 @@ namespace AssetTrackingSystem.Controllers
             return View(printer);
         }
 
-        // POST: Printer/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Location,HostName,Model,IP,SerialNumber,Note,PurchaseDate,InvoiceStartDate,InvoiceEndDate,LastUsedDate,IsInWarehouse,IsFaulty,FaultNote,CreatedDate")] Printer printer)
@@ -111,7 +101,6 @@ namespace AssetTrackingSystem.Controllers
             return View(printer);
         }
 
-        // GET: Printer/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -129,7 +118,6 @@ namespace AssetTrackingSystem.Controllers
             return View(printer);
         }
 
-        // POST: Printer/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
