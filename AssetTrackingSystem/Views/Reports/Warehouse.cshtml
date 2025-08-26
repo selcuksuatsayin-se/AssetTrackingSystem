@@ -34,7 +34,7 @@
         @if (Model.WarehouseComputers.Any())
         {
             <div class="card shadow mb-4">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-primary">
                     <h5 class="mb-0">
                         <i class="bi bi-pc-display me-2"></i>Bilgisayarlar
                         <span class="badge bg-white text-primary border ms-2">@Model.WarehouseComputers.Count</span>
@@ -89,7 +89,7 @@
         @if (Model.WarehouseDisplayMonitors.Any())
         {
             <div class="card shadow mb-4">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-info text-info">
                     <h5 class="mb-0">
                         <i class="bi bi-display me-2"></i>Monitörler
                         <span class="badge bg-white text-info border ms-2">@Model.WarehouseDisplayMonitors.Count</span>
@@ -144,7 +144,7 @@
         @if (Model.WarehouseMobilePhones.Any())
         {
             <div class="card shadow mb-4">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-success">
                     <h5 class="mb-0">
                         <i class="bi bi-phone me-2"></i>Cep Telefonları
                         <span class="badge bg-white text-success border ms-2">@Model.WarehouseMobilePhones.Count</span>
@@ -199,7 +199,7 @@
         @if (Model.WarehouseJabraHeadsets.Any())
         {
             <div class="card shadow mb-4">
-                <div class="card-header bg-warning text-white">
+                <div class="card-header bg-warning text-warning">
                     <h5 class="mb-0">
                         <i class="bi bi-headphones me-2"></i>Kulaklıklar
                         <span class="badge bg-white text-warning border ms-2">@Model.WarehouseJabraHeadsets.Count</span>
@@ -254,7 +254,7 @@
         @if (Model.WarehousePrinters.Any())
         {
             <div class="card shadow mb-4">
-                <div class="card-header bg-secondary text-white">
+                <div class="card-header bg-secondary text-secondary">
                     <h5 class="mb-0">
                         <i class="bi bi-printer me-2"></i>Yazıcılar
                         <span class="badge bg-white text-secondary border ms-2">@Model.WarehousePrinters.Count</span>
@@ -317,6 +317,29 @@
     }
 </div>
 
+<!-- Onay Modalı -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel"><i class="bi bi-question-circle me-2"></i>Onay Gerekiyor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu cihazı depodan çıkarmak istediğinize emin misiniz?</p>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <small>Cihaz bilgisi: <span id="modalDeviceInfo"></span></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="confirmAction">Evet, Çıkar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .card-header h5 {
         display: flex;
@@ -340,45 +363,63 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        let currentDeviceId, currentDeviceType, currentDeviceInfo, currentButton;
+
         // Depo işlemleri
         $('.warehouse-action').click(function() {
-            const deviceId = $(this).data('id');
-            const deviceType = $(this).data('type');
-            const btn = $(this);
+            currentDeviceId = $(this).data('id');
+            currentDeviceType = $(this).data('type');
+            currentButton = $(this);
 
-            if (confirm('Bu cihazı depodan çıkarmak istediğinize emin misiniz?')) {
-                // Butonu disable yap
-                btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i> İşleniyor...');
+            // Cihaz bilgisi alma
+            const row = $(this).closest('tr');
+            const model = row.find('td:eq(0)').text();
+            const serial = row.find('td:eq(1)').text();
+            currentDeviceInfo = `${model} (${serial})`;
 
-                $.post('/Reports/ToggleWarehouseStatus', {
-                    deviceId: deviceId,
-                    deviceType: deviceType,
-                    moveToWarehouse: false,
-                    note: "Depodan çıkarma işlemi"
-                }, function(response) {
-                    if (response.success) {
-                        // Başarılı mesajı göster
-                        const alertDiv = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                            '<i class="bi bi-check-circle me-2"></i>Cihaz başarıyla depodan çıkarıldı!' +
-                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-                            '</div>');
+            // Modal içeriği güncelleme
+            $('#modalDeviceInfo').text(currentDeviceInfo);
 
-                        $('.page-header').after(alertDiv);
+            // Modal'ı göster
+            $('#confirmModal').modal('show');
+        });
 
-                        // Sayfayı yenile
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        alert('İşlem sırasında hata oluştu: ' + (response.message || 'Bilinmeyen hata'));
-                        btn.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
-                    }
-                })
-                .fail(function(xhr) {
-                    alert('Sunucu hatası! Lütfen tekrar deneyin. (Hata: ' + xhr.status + ')');
-                    btn.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
-                });
-            }
+        // Onay butonu tıklandığında
+        $('#confirmAction').click(function() {
+            // Modal'ı kapat
+            $('#confirmModal').modal('hide');
+
+            // Butonu disable yap
+            currentButton.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i> İşleniyor...');
+
+            $.post('/Reports/ToggleWarehouseStatus', {
+                deviceId: currentDeviceId,
+                deviceType: currentDeviceType,
+                moveToWarehouse: false,
+                note: "Depodan çıkarma işlemi"
+            }, function(response) {
+                if (response.success) {
+                    // Başarılı mesajı göster
+                    const alertDiv = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        '<i class="bi bi-check-circle me-2"></i>Cihaz başarıyla depodan çıkarıldı!' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>');
+
+                    $('.page-header').after(alertDiv);
+
+                    // Sayfayı yenile
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert('İşlem sırasında hata oluştu: ' + (response.message || 'Bilinmeyen hata'));
+                    currentButton.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
+                }
+            })
+            .fail(function(xhr) {
+                alert('Sunucu hatası! Lütfen tekrar deneyin. (Hata: ' + xhr.status + ')');
+                currentButton.prop('disabled', false).html('<i class="bi bi-box-arrow-up"></i> Çıkar');
+            });
         });
     });
 </script>
